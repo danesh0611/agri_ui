@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
+import BlockchainDashboard from './pages/BlockchainDashboard'
 import QRGenerator from './pages/QRGenerator'
 import './App.css'
 
@@ -20,6 +21,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/blockchain" element={<BlockchainDashboard />} />
             <Route path="/qr" element={<QRGenerator />} />
           </Routes>
         </main>

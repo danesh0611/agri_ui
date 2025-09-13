@@ -33,6 +33,7 @@ export default function Navbar() {
 							{isLoggedIn ? (
 								<>
 									<NavLink to="/dashboard" className={navLinkClass}>{t('dashboard.title')}</NavLink>
+									<NavLink to="/blockchain" className={navLinkClass}>Blockchain</NavLink>
 									<NavLink to="/qr" className={navLinkClass}>{t('qrGenerator.title')}</NavLink>
 								</>
 							) : (
