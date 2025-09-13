@@ -15,6 +15,7 @@ export default function WalletConnector() {
 	const isMetaMaskInstalled = () => {
 		return typeof window !== 'undefined' && window.ethereum && window.ethereum.isMetaMask
 	}
+	//j
 
 	// Format address to show first 4 and last 4 characters
 	const formatAddress = (address) => {
