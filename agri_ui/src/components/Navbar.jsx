@@ -3,6 +3,7 @@ import { FaLeaf, FaUser, FaSignOutAlt } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import LanguageSwitcher from './LanguageSwitcher'
+import WalletConnector from './WalletConnector'
 
 const navLinkClass = ({ isActive }) =>
 	`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -41,6 +42,9 @@ export default function Navbar() {
 								</>
 							)}
 						</nav>
+						
+						{/* Wallet Connector */}
+						<WalletConnector />
 						
 						{isLoggedIn && user && (
 							<div className="flex items-center gap-3 pl-4 border-l border-slate-200">
