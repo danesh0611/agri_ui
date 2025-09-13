@@ -158,11 +158,11 @@ export default function FarmerForm({ onSuccess }) {
 				</label>
 
 				<label className="flex flex-col text-sm">
-					<span className="mb-1 text-slate-700">Price per kg (ETH) *</span>
+					<span className="mb-1 text-slate-700">Price per kg (₹) *</span>
 					<input
 						type="number"
 						min="0"
-						step="0.000001"
+						step="0.01"
 						name="pricePerKg"
 						value={formData.pricePerKg}
 						onChange={handleInputChange}

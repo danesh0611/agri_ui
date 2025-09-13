@@ -95,6 +95,60 @@ export const useContract = () => {
 		setError('')
 	}
 
+	// Auto-connect on component mount if previously connected
+	useEffect(() => {
+		const autoConnect = async () => {
+			if (!isMetaMaskInstalled()) return
+
+			try {
+				// Check if MetaMask is already connected
+				const accounts = await window.ethereum.request({ 
+					method: 'eth_accounts' 
+				})
+				
+				if (accounts.length > 0) {
+					// User was previously connected, auto-initialize
+					await initializeContract()
+				}
+			} catch (err) {
+				console.log('Auto-connect failed:', err)
+				// Silent fail for auto-connect
+			}
+		}
+
+		autoConnect()
+	}, [initializeContract])
+
+	// Listen for MetaMask account changes
+	useEffect(() => {
+		if (!isMetaMaskInstalled()) return
+
+		const handleAccountsChanged = (accounts) => {
+			if (accounts.length === 0) {
+				// User disconnected
+				disconnectWallet()
+			} else {
+				// User switched accounts, reinitialize
+				initializeContract()
+			}
+		}
+
+		const handleChainChanged = () => {
+			// Reload page on chain change
+			window.location.reload()
+		}
+
+		window.ethereum.on('accountsChanged', handleAccountsChanged)
+		window.ethereum.on('chainChanged', handleChainChanged)
+
+		return () => {
+			if (window.ethereum.removeListener) {
+				window.ethereum.removeListener('accountsChanged', handleAccountsChanged)
+				window.ethereum.removeListener('chainChanged', handleChainChanged)
+			}
+		}
+	}, [initializeContract])
+
 	// Contract interaction functions
 	const createProduce = async (farmerName, cropName, quantity, pricePerKg, location) => {
 		if (!contract) {
@@ -109,14 +163,15 @@ export const useContract = () => {
 			setIsLoading(true)
 			setError('')
 
-			// Convert price to wei (pricePerKg is in ETH, convert to wei)
-			const priceInWei = parseEther(pricePerKg.toString())
+			// Keep price as rupees (no ETH conversion needed)
+			// Store price directly as entered in rupees
+			const priceInRupees = pricePerKg
 
 			console.log('Creating produce with params:', {
 				farmerName,
 				cropName,
 				quantity: quantity.toString(),
-				pricePerKg: priceInWei.toString(),
+				pricePerKg: priceInRupees.toString(),
 				location
 			})
 
@@ -124,7 +179,7 @@ export const useContract = () => {
 				farmerName,
 				cropName,
 				quantity,
-				priceInWei,
+				priceInRupees,
 				location
 			)
 
@@ -169,15 +224,15 @@ export const useContract = () => {
 			setIsLoading(true)
 			setError('')
 
-			// Convert price to wei (purchasePrice is in ETH, convert to wei)
-			const priceInWei = parseEther(purchasePrice.toString())
+			// Keep price as rupees (no ETH conversion needed)
+			const priceInRupees = purchasePrice
 
 			console.log('Adding distributor with params:', {
 				batchId,
 				cropName,
 				distributorName,
 				quantityReceived: quantityReceived.toString(),
-				purchasePrice: priceInWei.toString(),
+				purchasePrice: priceInRupees.toString(),
 				transportDetails,
 				warehouseLocation,
 				handoverDate: handoverDate.toString()
@@ -188,7 +243,7 @@ export const useContract = () => {
 				cropName,
 				distributorName,
 				quantityReceived,
-				priceInWei,
+				priceInRupees,
 				transportDetails,
 				warehouseLocation,
 				handoverDate
@@ -233,9 +288,9 @@ export const useContract = () => {
 			setIsLoading(true)
 			setError('')
 
-			// Convert prices to wei (prices are in ETH, convert to wei)
-			const retailPriceInWei = parseEther(retailPurchasePrice.toString())
-			const consumerPriceInWei = parseEther(consumerPrice.toString())
+			// Keep prices as rupees (no ETH conversion needed)
+			const retailPriceInRupees = retailPurchasePrice
+			const consumerPriceInRupees = consumerPrice
 
 			console.log('Adding retailer with params:', {
 				batchId,
@@ -244,8 +299,8 @@ export const useContract = () => {
 				retailerName,
 				shopLocation,
 				retailQuantity: retailQuantity.toString(),
-				retailPurchasePrice: retailPriceInWei.toString(),
-				consumerPrice: consumerPriceInWei.toString(),
+				retailPurchasePrice: retailPriceInRupees.toString(),
+				consumerPrice: consumerPriceInRupees.toString(),
 				expiryDate: expiryDate.toString()
 			})
 
@@ -256,8 +311,8 @@ export const useContract = () => {
 				retailerName,
 				shopLocation,
 				retailQuantity,
-				retailPriceInWei,
-				consumerPriceInWei,
+				retailPriceInRupees,
+				consumerPriceInRupees,
 				expiryDate
 			)
 
@@ -296,7 +351,7 @@ export const useContract = () => {
 					cropName: produce.farmerInfo.cropName,
 					quantity: produce.farmerInfo.quantity.toString(),
 					remainingQuantity: produce.farmerInfo.remainingQuantity.toString(),
-					pricePerKg: formatEther(produce.farmerInfo.pricePerKg),
+					pricePerKg: produce.farmerInfo.pricePerKg.toString(),
 					location: produce.farmerInfo.location,
 					createdDate: produce.farmerInfo.createdDate.toString(),
 					farmer: produce.farmerInfo.farmer
@@ -305,7 +360,7 @@ export const useContract = () => {
 					distributorName: d.distributorName,
 					quantityReceived: d.quantityReceived.toString(),
 					remainingQuantity: d.remainingQuantity.toString(),
-					purchasePrice: formatEther(d.purchasePrice),
+					purchasePrice: d.purchasePrice.toString(),
 					transportDetails: d.transportDetails,
 					warehouseLocation: d.warehouseLocation,
 					handoverDate: d.handoverDate.toString(),
@@ -316,8 +371,8 @@ export const useContract = () => {
 					retailerName: r.retailerName,
 					shopLocation: r.shopLocation,
 					retailQuantity: r.retailQuantity.toString(),
-					retailPurchasePrice: formatEther(r.retailPurchasePrice),
-					consumerPrice: formatEther(r.consumerPrice),
+					retailPurchasePrice: r.retailPurchasePrice.toString(),
+					consumerPrice: r.consumerPrice.toString(),
 					expiryDate: r.expiryDate.toString(),
 					timestamp: r.timestamp.toString(),
 					retailer: r.retailer,

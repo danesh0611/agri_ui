@@ -18,7 +18,7 @@ export default function Signup() {
 
 	const roles = [
 		{ value: 'farmer', label: t('signup.roles.farmer'), icon: FaTractor },
-		{ value: 'transporter', label: t('signup.roles.transporter'), icon: FaTruck },
+		{ value: 'distributor', label: t('signup.roles.distributor'), icon: FaTruck },
 		{ value: 'retailer', label: t('signup.roles.retailer'), icon: FaStore },
 	]
 
@@ -32,8 +32,15 @@ export default function Signup() {
 			setError('Passwords do not match')
 			return
 		}
-		const payload = { action: 'signup', role, name, email, password }
-		const res = await postJson(payload)
+		// Include role in the registration payload
+		const payload = {
+			username: name,
+			email,
+			password,
+			role, // Include the selected role
+			blockchain_account: null // Replace with actual account if available
+		};
+		const res = await postJson(payload, 'register');
 		setLoading(false)
 		if (res.ok) {
 			setMessage(t('signup.successMessage'))

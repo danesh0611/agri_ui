@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useContract } from '../hooks/useContract'
-import { FaSearch, FaSpinner, FaExclamationTriangle, FaLeaf, FaTruck, FaStore, FaCalendar, FaMapMarkerAlt, FaDollarSign } from 'react-icons/fa'
+import { FaSearch, FaSpinner, FaExclamationTriangle, FaLeaf, FaTruck, FaStore } from 'react-icons/fa'
 
 export default function ProduceDisplay({ recentTransactions = [] }) {
 	const { getProduce, isConnected, connectWallet, isLoading, error } = useContract()
@@ -18,7 +18,7 @@ export default function ProduceDisplay({ recentTransactions = [] }) {
 		}
 
 		if (!isConnected) {
-			await connectWallet()
+			setSearchError('Please connect your wallet first to search batch details')
 			return
 		}
 
@@ -70,10 +70,11 @@ export default function ProduceDisplay({ recentTransactions = [] }) {
 				autoSearch()
 			}
 		}
-	}, [recentTransactions, isConnected, getProduce])
+	}, [recentTransactions, isConnected])
 
 	const getStageText = (stage) => {
-		switch (stage) {
+		const stageNum = parseInt(stage)
+		switch (stageNum) {
 			case 0: return 'Created'
 			case 1: return 'Distributed'
 			case 2: return 'Retail'
@@ -82,7 +83,8 @@ export default function ProduceDisplay({ recentTransactions = [] }) {
 	}
 
 	const getStageColor = (stage) => {
-		switch (stage) {
+		const stageNum = parseInt(stage)
+		switch (stageNum) {
 			case 0: return 'bg-blue-100 text-blue-800'
 			case 1: return 'bg-yellow-100 text-yellow-800'
 			case 2: return 'bg-green-100 text-green-800'
@@ -126,7 +128,7 @@ export default function ProduceDisplay({ recentTransactions = [] }) {
 					/>
 					<button
 						type="submit"
-						disabled={isLoadingProduce || isLoading}
+						disabled={isLoadingProduce}
 						className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-white font-medium hover:bg-primary-dark disabled:opacity-60 transition-colors"
 					>
 						{isLoadingProduce ? <FaSpinner className="animate-spin" /> : <FaSearch />}
@@ -178,24 +180,15 @@ export default function ProduceDisplay({ recentTransactions = [] }) {
 							</div>
 							<div>
 								<span className="text-sm font-medium text-green-700">Price per kg:</span>
-								<p className="text-green-900 flex items-center gap-1">
-									<FaDollarSign className="text-xs" />
-									{produceData.farmerInfo.pricePerKg} ETH
-								</p>
+								<p className="text-green-900">₹{produceData.farmerInfo.pricePerKg}</p>
 							</div>
 							<div>
 								<span className="text-sm font-medium text-green-700">Location:</span>
-								<p className="text-green-900 flex items-center gap-1">
-									<FaMapMarkerAlt className="text-xs" />
-									{produceData.farmerInfo.location}
-								</p>
+								<p className="text-green-900">{produceData.farmerInfo.location}</p>
 							</div>
 							<div>
 								<span className="text-sm font-medium text-green-700">Created Date:</span>
-								<p className="text-green-900 flex items-center gap-1">
-									<FaCalendar className="text-xs" />
-									{formatDate(produceData.farmerInfo.createdDate)}
-								</p>
+								<p className="text-green-900">{formatDate(produceData.farmerInfo.createdDate)}</p>
 							</div>
 							<div>
 								<span className="text-sm font-medium text-green-700">Farmer Address:</span>
@@ -228,24 +221,15 @@ export default function ProduceDisplay({ recentTransactions = [] }) {
 										</div>
 										<div>
 											<span className="text-sm font-medium text-blue-700">Purchase Price:</span>
-											<p className="text-blue-900 flex items-center gap-1">
-												<FaDollarSign className="text-xs" />
-												{distributor.purchasePrice} ETH
-											</p>
+											<p className="text-blue-900">₹{distributor.purchasePrice}</p>
 										</div>
 										<div>
 											<span className="text-sm font-medium text-blue-700">Warehouse Location:</span>
-											<p className="text-blue-900 flex items-center gap-1">
-												<FaMapMarkerAlt className="text-xs" />
-												{distributor.warehouseLocation}
-											</p>
+											<p className="text-blue-900">{distributor.warehouseLocation}</p>
 										</div>
 										<div>
 											<span className="text-sm font-medium text-blue-700">Handover Date:</span>
-											<p className="text-blue-900 flex items-center gap-1">
-												<FaCalendar className="text-xs" />
-												{formatDate(distributor.handoverDate)}
-											</p>
+											<p className="text-blue-900">{formatDate(distributor.handoverDate)}</p>
 										</div>
 										<div className="md:col-span-2">
 											<span className="text-sm font-medium text-blue-700">Transport Details:</span>
@@ -277,10 +261,7 @@ export default function ProduceDisplay({ recentTransactions = [] }) {
 										</div>
 										<div>
 											<span className="text-sm font-medium text-purple-700">Shop Location:</span>
-											<p className="text-purple-900 flex items-center gap-1">
-												<FaMapMarkerAlt className="text-xs" />
-												{retailer.shopLocation}
-											</p>
+											<p className="text-purple-900">{retailer.shopLocation}</p>
 										</div>
 										<div>
 											<span className="text-sm font-medium text-purple-700">Retail Quantity:</span>
@@ -288,24 +269,15 @@ export default function ProduceDisplay({ recentTransactions = [] }) {
 										</div>
 										<div>
 											<span className="text-sm font-medium text-purple-700">Purchase Price:</span>
-											<p className="text-purple-900 flex items-center gap-1">
-												<FaDollarSign className="text-xs" />
-												{retailer.retailPurchasePrice} ETH
-											</p>
+											<p className="text-purple-900">₹{retailer.retailPurchasePrice}</p>
 										</div>
 										<div>
 											<span className="text-sm font-medium text-purple-700">Consumer Price:</span>
-											<p className="text-purple-900 flex items-center gap-1">
-												<FaDollarSign className="text-xs" />
-												{retailer.consumerPrice} ETH per kg
-											</p>
+											<p className="text-purple-900">₹{retailer.consumerPrice} per kg</p>
 										</div>
 										<div>
 											<span className="text-sm font-medium text-purple-700">Expiry Date:</span>
-											<p className="text-purple-900 flex items-center gap-1">
-												<FaCalendar className="text-xs" />
-												{formatDate(retailer.expiryDate)}
-											</p>
+											<p className="text-purple-900">{formatDate(retailer.expiryDate)}</p>
 										</div>
 										<div>
 											<span className="text-sm font-medium text-purple-700">Distributor Source:</span>

@@ -208,11 +208,11 @@ export default function RetailerForm({ onSuccess }) {
 				</label>
 
 				<label className="flex flex-col text-sm">
-					<span className="mb-1 text-slate-700">Retail Purchase Price (ETH) *</span>
+					<span className="mb-1 text-slate-700">Retail Purchase Price (₹) *</span>
 					<input
 						type="number"
 						min="0"
-						step="0.000001"
+						step="0.01"
 						name="retailPurchasePrice"
 						value={formData.retailPurchasePrice}
 						onChange={handleInputChange}
@@ -222,11 +222,11 @@ export default function RetailerForm({ onSuccess }) {
 				</label>
 
 				<label className="flex flex-col text-sm">
-					<span className="mb-1 text-slate-700">Consumer Price (ETH) *</span>
+					<span className="mb-1 text-slate-700">Consumer Price (₹) *</span>
 					<input
 						type="number"
 						min="0"
-						step="0.000001"
+						step="0.01"
 						name="consumerPrice"
 						value={formData.consumerPrice}
 						onChange={handleInputChange}

@@ -180,11 +180,11 @@ export default function DistributorForm({ onSuccess }) {
 				</label>
 
 				<label className="flex flex-col text-sm">
-					<span className="mb-1 text-slate-700">Purchase Price (ETH) *</span>
+					<span className="mb-1 text-slate-700">Purchase Price (₹) *</span>
 					<input
 						type="number"
 						min="0"
-						step="0.000001"
+						step="0.01"
 						name="purchasePrice"
 						value={formData.purchasePrice}
 						onChange={handleInputChange}

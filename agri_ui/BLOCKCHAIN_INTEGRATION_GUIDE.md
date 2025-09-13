@@ -4,6 +4,7 @@
 
 Your AgriTrace application now has full blockchain integration with your deployed smart contract at `0x7eEf6E6f577b20388cf24ac51a5ad991F6857855`.
 
+
 ## 📁 **New Files Created**
 
 ### **1. Contract Integration**
