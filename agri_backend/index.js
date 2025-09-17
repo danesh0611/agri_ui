@@ -114,6 +114,16 @@ app.post('/api/register', async (req, res) => {
       throw new Error('Database not connected');
     }
     
+    // First check if email already exists
+    const checkRequest = pool.request();
+    checkRequest.input('email', sql.NVarChar, email);
+    const existingUser = await checkRequest.query('SELECT id FROM users WHERE email = @email');
+    
+    if (existingUser.recordset.length > 0) {
+      return res.status(409).json({ error: 'Email already registered' });
+    }
+    
+    // If email doesn't exist, proceed with registration
     const request = pool.request();
     request.input('username', sql.NVarChar, username);
     request.input('email', sql.NVarChar, email);
@@ -123,7 +133,7 @@ app.post('/api/register', async (req, res) => {
     const result = await request.query('INSERT INTO users (username, email, password, role) VALUES (@username, @email, @password, @role)');
     res.json({ success: true, userId: result.rowsAffected[0] });
   } catch (err) {
-    console.error('Insert error:', err);
+    console.error('Registration error:', err);
     res.status(500).json({ error: 'Database error', details: err.message });
   }
 });

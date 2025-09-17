@@ -45,7 +45,13 @@ export default function Signup() {
 			setMessage(t('signup.successMessage'))
 			setTimeout(() => navigate('/login'), 2000)
 		}
-		else setError(`${t('signup.signupFailed')} (status ${res.status})`)
+		else {
+			if (res.status === 409) {
+				setError('Email already registered. Please use a different email or try logging in.')
+			} else {
+				setError(`${t('signup.signupFailed')} (status ${res.status})`)
+			}
+		}
 	}
 
 	return (
