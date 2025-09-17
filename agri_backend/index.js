@@ -8,7 +8,12 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+  origin: [
+    'http://localhost:5173', 
+    'http://localhost:5174', 
+    'http://localhost:3000',
+    'https://agri-trace-mu.vercel.app'
+  ],
   credentials: true
 }));
 app.use(bodyParser.json());
@@ -46,8 +51,9 @@ let pool = null;
 // Initialize connection pool
 async function initializePool() {
   try {
+    console.log('Initializing SQL Server connection pool...');
     pool = await sql.connect(config);
-    console.log('Connected to SQL Server');
+    console.log('Connected to SQL Server successfully');
     
     // Create table if not exists
     await pool.request().query(`
@@ -62,13 +68,32 @@ async function initializePool() {
       )
     `);
     console.log('Users table ready');
+    return true;
   } catch (err) {
     console.error('SQL Server connection error:', err);
+    pool = null;
+    return false;
   }
 }
 
-// Initialize on startup
-initializePool();
+// Initialize on startup and start server only after connection is ready
+async function startServer() {
+  console.log('Starting server initialization...');
+  const connected = await initializePool();
+  
+  if (!connected) {
+    console.error('Failed to connect to database. Retrying in 5 seconds...');
+    setTimeout(startServer, 5000);
+    return;
+  }
+  
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+}
+
+// Start the server
+startServer();
 
 // Registration endpoint
 app.post('/api/register', async (req, res) => {
@@ -132,8 +157,4 @@ app.post('/api/login', async (req, res) => {
     console.error('Login query error:', err);
     res.status(500).json({ error: 'Database error' });
   }
-});
-
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
 });
