@@ -158,7 +158,7 @@ export default function BlockchainDashboard() {
 						{role === 'farmer' && (
 							<FarmerForm onSuccess={handleTransactionSuccess} />
 						)}
-						{role === 'transporter' && (
+						{role === 'distributor' && (
 							<DistributorForm onSuccess={handleTransactionSuccess} />
 						)}
 						{role === 'retailer' && (
