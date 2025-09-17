@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/6a401b44-e90b-40ac-8c0e-78348fbd8d59/resourceGroups/appsvc_linux_southindia/providers/Microsoft.Web/sites/agri-backend-2025",
+    "appService.deploySubpath": "agri_backend"
+}

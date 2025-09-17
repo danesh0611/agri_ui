@@ -1,47 +1,77 @@
 
 import express from 'express';
-import mysql from 'mysql2';
+import sql from 'mssql';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+  credentials: true
+}));
 app.use(bodyParser.json());
 
-// MySQL connection
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'root',
-  database: 'agri_db'
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ message: 'Agriculture Backend API is running!', timestamp: new Date().toISOString() });
 });
 
-db.connect((err) => {
-  if (err) {
-    console.error('MySQL connection error:', err);
-  } else {
-    console.log('Connected to MySQL');
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', database: 'Not tested yet' });
+});
+
+// SQL Server connection configuration
+const config = {
+  server: process.env.DB_SERVER || 'ledgerlegends.database.windows.net',
+  user: process.env.DB_USER || 'ledgerlegends',
+  password: process.env.DB_PASSWORD || 'Chakra*2006',
+  database: process.env.DB_NAME || 'regdetails',
+  port: parseInt(process.env.DB_PORT) || 1433,
+  options: {
+    encrypt: true,
+    trustServerCertificate: false
+  },
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000
   }
-});
+};
 
-// Create table if not exists
-const createTableQuery = `CREATE TABLE IF NOT EXISTS users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(255) NOT NULL,
-  email VARCHAR(255) NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  role ENUM('farmer', 'distributor', 'retailer') NOT NULL,
-  blockchain_account VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)`;
-db.query(createTableQuery, (err) => {
-  if (err) console.error('Table creation error:', err);
-});
+// Global connection pool
+let pool = null;
+
+// Initialize connection pool
+async function initializePool() {
+  try {
+    pool = await sql.connect(config);
+    console.log('Connected to SQL Server');
+    
+    // Create table if not exists
+    await pool.request().query(`
+      IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='users' AND xtype='U')
+      CREATE TABLE users (
+        id INT IDENTITY(1,1) PRIMARY KEY,
+        username NVARCHAR(255) NOT NULL,
+        email NVARCHAR(255) NOT NULL,
+        password NVARCHAR(255) NOT NULL,
+        role NVARCHAR(50) NOT NULL CHECK (role IN ('farmer', 'distributor', 'retailer')),
+        created_at DATETIME DEFAULT GETDATE()
+      )
+    `);
+    console.log('Users table ready');
+  } catch (err) {
+    console.error('SQL Server connection error:', err);
+  }
+}
+
+// Initialize on startup
+initializePool();
 
 // Registration endpoint
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
   const { username, email, password, role } = req.body;
   if (!username || !email || !password || !role) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -53,36 +83,55 @@ app.post('/api/register', (req, res) => {
     return res.status(400).json({ error: 'Invalid role' });
   }
   
-  const sql = 'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)';
-  db.query(sql, [username, email, password, role], (err, result) => {
-    if (err) {
-      console.error('Insert error:', err);
-      return res.status(500).json({ error: 'Database error' });
+  try {
+    if (!pool) {
+      throw new Error('Database not connected');
     }
-    res.json({ success: true, userId: result.insertId });
-  });
+    
+    const request = pool.request();
+    request.input('username', sql.NVarChar, username);
+    request.input('email', sql.NVarChar, email);
+    request.input('password', sql.NVarChar, password);
+    request.input('role', sql.NVarChar, role);
+    
+    const result = await request.query('INSERT INTO users (username, email, password, role) VALUES (@username, @email, @password, @role)');
+    res.json({ success: true, userId: result.rowsAffected[0] });
+  } catch (err) {
+    console.error('Insert error:', err);
+    res.status(500).json({ error: 'Database error', details: err.message });
+  }
 });
 
 // Login endpoint
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Missing email or password' });
   }
-  const sql = 'SELECT * FROM users WHERE email = ? AND password = ?';
-  db.query(sql, [email, password], (err, results) => {
-    if (err) {
-      console.error('Login query error:', err);
-      return res.status(500).json({ error: 'Database error' });
+  
+  try {
+    if (!pool) {
+      throw new Error('Database not connected');
     }
-    if (results.length === 0) {
+    
+    const request = pool.request();
+    request.input('email', sql.NVarChar, email);
+    request.input('password', sql.NVarChar, password);
+    
+    const result = await request.query('SELECT * FROM users WHERE email = @email AND password = @password');
+    
+    if (result.recordset.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+    
     // Optionally, do not send password back
-    const user = { ...results[0] };
+    const user = { ...result.recordset[0] };
     delete user.password;
     res.json({ success: true, user });
-  });
+  } catch (err) {
+    console.error('Login query error:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
 });
 
 app.listen(port, () => {

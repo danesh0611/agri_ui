@@ -1,4 +1,4 @@
-export const BASE_URL = 'http://localhost:5000/api/';
+export const BASE_URL = 'https://agri-backend-2025-dxfkavfcamg0ebby.southindia-01.azurewebsites.net/api/';
 
 export async function getJson(path = '') {
 	const res = await fetch(BASE_URL + path, {
