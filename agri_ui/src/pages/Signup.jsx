@@ -37,8 +37,7 @@ export default function Signup() {
 			username: name,
 			email,
 			password,
-			role, // Include the selected role
-			blockchain_account: null // Replace with actual account if available
+			role // Include the selected role
 		};
 		const res = await postJson(payload, 'register');
 		setLoading(false)
